@@ -54,8 +54,7 @@ export const memories = {
     subtitle: "Some things are easier to remember backwards.",
     message: "A collection of little moments that somehow became our story.",
 
-    videoUrl: "/dummy-memory.mp4",
-    // videoUrl: "/photo-montage.mp4",
+    videoUrl: "/photo-montage.mp4",
     posterUrl: "",
   },
 
