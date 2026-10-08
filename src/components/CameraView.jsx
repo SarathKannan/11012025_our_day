@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Volume2, VolumeX, Camera, RotateCcw, X, Heart } from "lucide-react";
 import { createQrDetector } from "../utils/markerDetector";
 
-export default function CameraView({ memory, onExit }) {
+export default function CameraView({ memories = [], onExit }) {
   // Live camera
   const cameraRef = useRef(null);
   const streamRef = useRef(null);
@@ -18,6 +18,20 @@ export default function CameraView({ memory, onExit }) {
   const [found, setFound] = useState(false);
   const [muted, setMuted] = useState(false);
   const [fallback, setFallback] = useState(false);
+  const [activeMemory, setActiveMemory] = useState(null);
+
+  const findMatchingMemory = (qrValue) => {
+    if (!qrValue || !Array.isArray(memories)) return null;
+
+    return (
+      memories.find(
+        (memory) =>
+          memory &&
+          memory.videoUrl &&
+          (memory.qrId === qrValue || memory.id === qrValue),
+      ) ?? null
+    );
+  };
 
   const stopScanner = () => {
     detectorRef.current?.();
@@ -166,12 +180,14 @@ export default function CameraView({ memory, onExit }) {
 
       // QR detected
       (data) => {
-        console.log("QR detected:", data);
-        console.log("Expected:", memory.id);
+        const matchedMemory = findMatchingMemory(data);
 
-        if (data === memory.qrId) {
-          console.log("✅ Memory QR matched:", memory.id);
+        if (matchedMemory) {
+          console.log("✅ Memory QR matched:", matchedMemory.id);
+          setActiveMemory(matchedMemory);
           setFound(true);
+        } else {
+          setFound(false);
         }
       },
 
@@ -189,7 +205,7 @@ export default function CameraView({ memory, onExit }) {
       detectorRef.current?.();
       detectorRef.current = null;
     };
-  }, [cameraState, memory.id]);
+  }, [cameraState, memories]);
 
   /*
    * ---------------------------------------------------------
@@ -202,17 +218,17 @@ export default function CameraView({ memory, onExit }) {
 
     if (!video) return;
 
-    console.log("Memory video URL:", memory.videoUrl);
+    console.log("Memory video URL:", activeMemory?.videoUrl);
 
-    // Reset the video whenever the memory changes.
+    // Reset the video whenever the active memory changes.
     video.pause();
     video.currentTime = 0;
 
-    if (memory.videoUrl) {
-      video.src = memory.videoUrl;
+    if (activeMemory?.videoUrl) {
+      video.src = activeMemory.videoUrl;
       video.load();
     }
-  }, [memory.videoUrl]);
+  }, [activeMemory?.videoUrl]);
 
   /*
    * ---------------------------------------------------------
@@ -223,7 +239,7 @@ export default function CameraView({ memory, onExit }) {
   useEffect(() => {
     const video = memoryVideoRef.current;
 
-    if (!video || !memory.videoUrl) return;
+    if (!video || !activeMemory?.videoUrl) return;
 
     if (found) {
       console.log("▶️ QR found — attempting memory video playback");
@@ -254,7 +270,7 @@ export default function CameraView({ memory, onExit }) {
 
       video.pause();
     }
-  }, [found, memory.videoUrl]);
+  }, [found, activeMemory?.videoUrl]);
 
   /*
    * ---------------------------------------------------------
@@ -333,7 +349,7 @@ export default function CameraView({ memory, onExit }) {
           MEMORY LENS
         </div>
 
-        <div className="camera-date">{memory.date}</div>
+        <div className="camera-date">{activeMemory?.date ?? ""}</div>
       </header>
 
       {/* =====================================================
@@ -394,7 +410,7 @@ export default function CameraView({ memory, onExit }) {
 
           {/* Sound control */}
 
-          {found && memory.videoUrl && !fallback && (
+          {found && activeMemory?.videoUrl && !fallback && (
             <button
               className="sound-btn"
               onClick={toggleMute}
@@ -408,9 +424,9 @@ export default function CameraView({ memory, onExit }) {
         {/* Memory information */}
 
         <div className="memory-caption">
-          <span>{memory.date}</span>
-          <strong>{memory.title}</strong>
-          <em>{memory.subtitle}</em>
+          <span>{activeMemory?.date ?? ""}</span>
+          <strong>{activeMemory?.title ?? ""}</strong>
+          <em>{activeMemory?.subtitle ?? ""}</em>
         </div>
       </section>
 

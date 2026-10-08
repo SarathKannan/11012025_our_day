@@ -6,15 +6,17 @@ import CameraView from "../components/CameraView";
 import { useState } from "react";
 
 export default function Home() {
-  const memory = memories["wedding"];
+  const memoryList = Object.values(memories);
   const [started, setStarted] = useState(false);
 
   const onStart = () => {
     setStarted(true);
   };
+
   if (started) {
-    return <CameraView memory={memory} onExit={() => setStarted(false)} />;
+    return <CameraView memories={memoryList} onExit={() => setStarted(false)} />;
   }
+
   return (
     <main className="home-shell">
       <div className="grain" />
