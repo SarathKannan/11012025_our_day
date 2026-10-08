@@ -49,3 +49,6 @@ Deploy the generated `dist` directory to Cloudflare Pages (or another static HTT
 The normal phone camera scans the QR and opens the website. The webpage then asks for camera permission. After the user taps Start Memory, the page uses the rear camera to look for the same QR code. The native camera app cannot continue scanning after it hands control to the browser.
 
 The current implementation uses QR detection to control playback. It is intentionally not a heavy 3D AR engine. The video is presented as a cinematic camera overlay, giving the desired AR-like memory-card effect while keeping the app small and dependable.
+
+## The APP
+https://11012025-our-day.vercel.app/
