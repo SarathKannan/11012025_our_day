@@ -10,6 +10,7 @@ export function createQrDetector(video, onDetected, onLost) {
 
   const tick = () => {
     if (!active) return;
+
     if (video.readyState >= 2 && video.videoWidth > 0) {
       const targetWidth = Math.min(720, video.videoWidth);
       const scale = targetWidth / video.videoWidth;
@@ -20,18 +21,24 @@ export function createQrDetector(video, onDetected, onLost) {
       const code = jsQR(image.data, image.width, image.height, {
         inversionAttempts: "attemptBoth",
       });
+
       if (code) {
         lastSeen = performance.now();
         onDetected(code.data, code.location);
       } else if (lastSeen && performance.now() - lastSeen > LOST_AFTER) {
+        lastSeen = 0;
         onLost();
       }
     }
+
     raf = requestAnimationFrame(tick);
   };
+
   raf = requestAnimationFrame(tick);
+
   return () => {
     active = false;
     cancelAnimationFrame(raf);
+    lastSeen = 0;
   };
 }

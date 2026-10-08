@@ -1,213 +1,3 @@
-// // Old Code:
-// import {
-//   Camera,
-//   Heart,
-//   Volume2,
-//   VolumeX,
-//   Play,
-//   RotateCcw,
-//   X,
-// } from "lucide-react";
-// import React, { useEffect, useRef, useState } from "react";
-// import { createQrDetector } from "../utils/markerDetector";
-
-// export default function CameraView({ memory, onExit }) {
-//   const videoRef = useRef(null);
-//   const memoryVideoRef = useRef(null);
-//   const streamRef = useRef(null);
-//   const detectorStopRef = useRef(null);
-//   const [cameraState, setCameraState] = useState("requesting");
-//   const [found, setFound] = useState(false);
-//   const [muted, setMuted] = useState(true);
-//   const [error, setError] = useState("");
-//   const [fallback, setFallback] = useState(false);
-
-//   const stopCamera = () => {
-//     detectorStopRef.current?.();
-//     detectorStopRef.current = null;
-//     streamRef.current?.getTracks().forEach((t) => t.stop());
-//     streamRef.current = null;
-//   };
-
-//   useEffect(() => {
-//     let mounted = true;
-//     async function start() {
-//       try {
-//         if (!navigator.mediaDevices?.getUserMedia)
-//           throw new Error("unsupported");
-//         const stream = await navigator.mediaDevices.getUserMedia({
-//           video: {
-//             facingMode: { ideal: "environment" },
-//             width: { ideal: 1280 },
-//             height: { ideal: 720 },
-//           },
-//           audio: false,
-//         });
-//         if (!mounted) {
-//           stream.getTracks().forEach((t) => t.stop());
-//           return;
-//         }
-//         streamRef.current = stream;
-//         videoRef.current.srcObject = stream;
-//         await videoRef.current.play();
-//         setCameraState("searching");
-//         detectorStopRef.current = createQrDetector(
-//           videoRef.current,
-//           (data) => {
-//             const expected = new URL(window.location.href);
-//             const detectedUrl = (() => {
-//               try {
-//                 return new URL(data, window.location.origin);
-//               } catch {
-//                 return null;
-//               }
-//             })();
-//             const detectedId = detectedUrl?.searchParams.get("id");
-//             const isMatch =
-//               detectedId ===
-//                 new URLSearchParams(window.location.search).get("id") ||
-//               data.includes(
-//                 `id=${new URLSearchParams(window.location.search).get("id")}`,
-//               );
-//             if (isMatch) {
-//               setFound(true);
-//               setCameraState("found");
-//             }
-//           },
-//           () => setFound(false),
-//         );
-//       } catch (e) {
-//         if (!mounted) return;
-//         setCameraState("error");
-//         setError(
-//           e?.message === "unsupported"
-//             ? "Your browser does not support the camera experience."
-//             : "Camera access is needed to bring this memory to life.",
-//         );
-//       }
-//     }
-//     start();
-//     return () => {
-//       mounted = false;
-//       stopCamera();
-//     };
-//   }, []);
-
-//   useEffect(() => {
-//     const v = memoryVideoRef.current;
-//     if (!v) return;
-//     if (found) v.play().catch(() => {});
-//     else v.pause();
-//   }, [found]);
-
-//   const playFallback = () => {
-//     stopCamera();
-//     setFallback(true);
-//     setFound(true);
-//     memoryVideoRef.current?.play().catch(() => {});
-//   };
-
-//   return (
-//     <main className="camera-shell">
-//       <video
-//         ref={videoRef}
-//         className="camera-feed"
-//         playsInline
-//         muted
-//         aria-label="Camera view"
-//       />
-//       <div className="camera-vignette" />
-//       <header className="camera-top">
-//         <button className="icon-btn" onClick={onExit} aria-label="Close">
-//           <X size={19} />
-//         </button>
-//         <div className="live-label">
-//           <span className="live-dot" /> MEMORY LENS
-//         </div>
-//         <div className="camera-date">{memory.date}</div>
-//       </header>
-//       <div className="scan-zone">
-//         <div className="corner tl" />
-//         <div className="corner tr" />
-//         <div className="corner bl" />
-//         <div className="corner br" />
-//         <div className="scan-line" />
-//       </div>
-//       <div className="scan-copy">
-//         <Camera size={17} />
-//         <span>
-//           {cameraState === "error"
-//             ? "Camera unavailable"
-//             : found
-//               ? "Memory found"
-//               : "Point at your memory card"}
-//         </span>
-//       </div>
-//       <section
-//         className={`memory-overlay ${found ? "visible" : ""} ${fallback ? "fallback" : ""}`}
-//       >
-//         <div className="video-frame">
-//           <video
-//             ref={memoryVideoRef}
-//             src={memory.videoUrl || undefined}
-//             poster={memory.posterUrl || undefined}
-//             playsInline
-//             muted={muted}
-//             preload="metadata"
-//             controls={fallback}
-//             onEnded={() => setFound(false)}
-//           />
-//           {!memory.videoUrl && (
-//             <div className="video-placeholder">
-//               <Heart size={28} fill="currentColor" />
-//               <p>Add your video URL</p>
-//               <small>
-//                 Edit <b>src/data/memories.js</b>
-//               </small>
-//             </div>
-//           )}
-//           {found && memory.videoUrl && !fallback && (
-//             <button className="sound-btn" onClick={() => setMuted((m) => !m)}>
-//               {muted ? <VolumeX size={17} /> : <Volume2 size={17} />}
-//             </button>
-//           )}
-//         </div>
-//         <div className="memory-caption">
-//           <span>{memory.date}</span>
-//           <strong>{memory.title}</strong>
-//           <em>{memory.subtitle}</em>
-//         </div>
-//       </section>
-//       {cameraState === "error" && (
-//         <div className="error-card">
-//           <Heart size={18} />
-//           <h2>Let the memory play another way.</h2>
-//           <p>{error}</p>
-//           <button onClick={playFallback}>
-//             <Play size={16} /> Play memory
-//           </button>
-//         </div>
-//       )}
-//       {cameraState !== "error" && !found && (
-//         <div className="search-hint">
-//           <span>Searching for your memory…</span>
-//           <div className="pulse">
-//             <i />
-//             <i />
-//             <i />
-//           </div>
-//         </div>
-//       )}
-//       {cameraState === "error" && (
-//         <button className="retry" onClick={() => window.location.reload()}>
-//           <RotateCcw size={15} /> Try again
-//         </button>
-//       )}
-//     </main>
-//   );
-// }
-
-// New Code:
 import React, { useEffect, useRef, useState } from "react";
 import { Volume2, VolumeX, Camera, RotateCcw, X, Heart } from "lucide-react";
 import { createQrDetector } from "../utils/markerDetector";
@@ -229,16 +19,29 @@ export default function CameraView({ memory, onExit }) {
   const [muted, setMuted] = useState(false);
   const [fallback, setFallback] = useState(false);
 
-  /*
-   * ---------------------------------------------------------
-   * CAMERA
-   * ---------------------------------------------------------
-   */
+  const stopScanner = () => {
+    detectorRef.current?.();
+    detectorRef.current = null;
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+  };
+
+  const handleClose = () => {
+    stopScanner();
+    onExit?.();
+  };
 
   const startCamera = async () => {
     setCameraState("starting");
     setErrorMessage("");
     setFallback(false);
+
+    // Stop any existing detector before restarting the camera.
+    detectorRef.current?.();
+    detectorRef.current = null;
 
     if (!window.isSecureContext) {
       setCameraState("error");
@@ -341,14 +144,7 @@ export default function CameraView({ memory, onExit }) {
     startCamera();
 
     return () => {
-      detectorRef.current?.stop?.();
-
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-        streamRef.current = null;
-      }
-      // detector.stop();
-      detectorRef.current = null;
+      stopScanner();
     };
   }, []);
 
@@ -390,8 +186,7 @@ export default function CameraView({ memory, onExit }) {
 
     return () => {
       console.log("Cleaned up QR detector");
-
-      // detector.stop();
+      detectorRef.current?.();
       detectorRef.current = null;
     };
   }, [cameraState, memory.id]);
@@ -526,7 +321,7 @@ export default function CameraView({ memory, onExit }) {
 
       <header className="camera-top">
         {onExit ? (
-          <button className="icon-btn" onClick={onExit} aria-label="Close">
+          <button className="icon-btn" onClick={handleClose} aria-label="Close">
             <X size={19} />
           </button>
         ) : (
