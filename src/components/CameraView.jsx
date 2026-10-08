@@ -244,6 +244,9 @@ export default function CameraView({ memories = [], onExit }) {
     if (found) {
       console.log("▶️ QR found — attempting memory video playback");
 
+      video.muted = muted;
+      video.volume = muted ? 0 : 1;
+
       video
         .play()
         .then(() => {
@@ -254,6 +257,7 @@ export default function CameraView({ memories = [], onExit }) {
 
           // Keep muted playback available on mobile.
           video.muted = true;
+          video.volume = 0;
           setMuted(true);
 
           video
@@ -270,7 +274,7 @@ export default function CameraView({ memories = [], onExit }) {
 
       video.pause();
     }
-  }, [found, activeMemory?.videoUrl]);
+  }, [found, activeMemory?.videoUrl, muted]);
 
   /*
    * ---------------------------------------------------------
@@ -304,8 +308,14 @@ export default function CameraView({ memories = [], onExit }) {
 
     if (!video) return;
 
-    video.muted = !video.muted;
-    setMuted(video.muted);
+    const nextMuted = !video.muted;
+    video.muted = nextMuted;
+    video.volume = nextMuted ? 0 : 1;
+    setMuted(nextMuted);
+
+    if (!nextMuted) {
+      video.play().catch(() => {});
+    }
   };
 
   /*
