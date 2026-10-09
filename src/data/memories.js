@@ -67,8 +67,7 @@ export const memories = {
     message:
       "For a little while, it was just us, the water, and nowhere else to be.",
 
-    videoUrl: "/dummy-memory.mp4",
-    // videoUrl: "/maldives-reel.mp4",
+    videoUrl: "/maldives-reel.mp4",
     posterUrl: "",
   },
 };
