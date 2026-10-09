@@ -40,8 +40,7 @@ export const memories = {
     subtitle: "Not everything changed. Just enough.",
     message: "Some things in life only become different after someone arrives.",
 
-    videoUrl: "/dummy-memory.mp4",
-    // videoUrl: "/after-you.mp4",
+    videoUrl: "/after-you.mp4",
     posterUrl: "",
   },
 
